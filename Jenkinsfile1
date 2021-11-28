@@ -1,0 +1,30 @@
+node {
+    stage('Git checkout'){
+        tool name: 'jdk8', type: 'jdk'
+        git 'https://github.com/syed316/vprofile.git'
+    }
+    stage('mvn package'){
+        def mvnHome = tool name: 'maven3', type: 'maven'
+        def mvnCMD = "${mvnHome}/bin/mvn"
+        sh "${mvnCMD} clean package"
+    }
+    stage('Docker build'){
+        sh "docker build -t munna303/vprofile:${BUILD_NUMBER} ."
+    }
+    stage('Push Docker image'){
+        withCredentials([string(credentialsId: 'dockerpass', variable: 'docker_pass')]) {
+        sh "docker login -u munna303 -p ${docker_pass}"
+    }
+        
+        sh "docker push munna303/vprofile:${BUILD_NUMBER}"
+    }
+    stage('deploy on docker-server'){
+        def dockerRun = "docker run -p 8080:8080 -d --name vprofile munna303/vprofile:${BUILD_NUMBER}"
+        sshagent(['docker_server']) {
+            sh 'ssh -o StrictHostKeyChecking=no ec2-user@172.31.10.151 docker stop vprofile'
+            sh 'ssh -o StrictHostKeyChecking=no ec2-user@172.31.10.151 docker rm vprofile'
+        sh "ssh -o StrictHostKeyChecking=no ec2-user@172.31.10.151 ${dockerRun}"
+}
+    }
+    
+}

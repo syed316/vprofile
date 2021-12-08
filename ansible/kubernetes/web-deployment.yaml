@@ -9,6 +9,7 @@ spec:
   - port: 8080
     name: db-service
     targetport: 8080
+    nodePort: 30004
   selector:
     app: web
   

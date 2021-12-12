@@ -7,6 +7,6 @@ FROM tomcat
 VOLUME /tmp
 EXPOSE 8080
 COPY --from=build /home/app/target/*.war /usr/local/tomcat/webapps/ROOT.war
-ENTRYPOINT [ "catilinash", "run" ]
+CMD ["catalina.sh", "run"]
 
 

@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo1
+spec:
+  ports:
+  - port: 80
+    targetPort: 5678
+  selector:
+    app: echo1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo1
+spec:
+  selector:
+    matchLabels:
+      app: echo1
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: echo1
+    spec:
+      containers:
+      - name: echo1
+        image: hashicorp/http-echo
+        args:
+        - "-text=echo1"
+        ports:
+        - containerPort: 5678
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: syedingress
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: echo1
+            port:
+              number: 80
+      - path: /kpi
+        pathType: Prefix
+        backend:
+          service:
+            name: echo2
+            port:
+              number: 80
